@@ -310,7 +310,7 @@
     <div class="pen-btns">
       <button class="pbtn pbtn-cancel" onclick="penClose()">취소</button>
       <button class="pbtn pbtn-reset"  onclick="penReset()">초기화</button>
-      <button class="pbtn pbtn-done"   id="btnDone" onclick="penSave()">완료</button>
+      <button class="pbtn pbtn-done"   onclick="penSave()">완료</button>
     </div>
   </div>
 </div>
@@ -373,7 +373,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 /* ─────────────────────── 상수 ─────────────────────── */
 var VEHICLES = ['', 'M1', 'M2', '스타렉스'];
@@ -518,10 +517,12 @@ function makeTimeBtn(dk, r, di) {
 function refreshRemark(dk2, r2) {
   document.querySelectorAll('.remark-pen').forEach(function(pen) {
     if (pen.dataset.dk===dk2 && parseInt(pen.dataset.r)===r2) {
-      var txt=lsGet(skey(dk2,r2,'txt'));
+      var imgVal=lsGet(skey(dk2,r2,'img'));
       pen.innerHTML='';
-      if (txt) {
-        var sp=document.createElement('span'); sp.className='remark-text'; sp.textContent=txt; pen.appendChild(sp);
+      if (imgVal) {
+        var img=document.createElement('img'); img.src=imgVal;
+        img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+        pen.appendChild(img);
       } else {
         var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='클릭'; pen.appendChild(ph);
       }
@@ -536,9 +537,11 @@ function makeRemarkCell(dk, r, di) {
 
   var pen=document.createElement('div'); pen.className='remark-pen';
   pen.dataset.dk=dk; pen.dataset.r=r; pen.dataset.di=di;
-  var txtVal=lsGet(skey(dk,r,'txt'));
-  if (txtVal) {
-    var sp=document.createElement('span'); sp.className='remark-text'; sp.textContent=txtVal; pen.appendChild(sp);
+  var imgVal=lsGet(skey(dk,r,'img'));
+  if (imgVal) {
+    var img=document.createElement('img'); img.src=imgVal;
+    img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+    pen.appendChild(img);
   } else {
     var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='클릭'; pen.appendChild(ph);
   }
@@ -578,7 +581,6 @@ function penOpen(dk, r, di) {
   var dates=weekDates(wOff);
   document.getElementById('penInfo').textContent=
     fmt(dates[di])+' ('+DAYKO[di]+') — '+(r+1)+'번째 줄';
-  document.getElementById('ocrResult').value = lsGet(skey(dk,r,'txt'));
   document.getElementById('eraser').classList.remove('on');
   eraserOn=false;
   setTimeout(function(){
@@ -586,6 +588,8 @@ function penOpen(dk, r, di) {
     cvs.width=Math.max(Math.round(rect.width),400);
     cvs.height=Math.max(Math.round(rect.height),200);
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,cvs.width,cvs.height);
+    var saved=lsGet(skey(dk,r,'img'));
+    if (saved) { var i2=new Image(); i2.onload=function(){ ctx.drawImage(i2,0,0,cvs.width,cvs.height); }; i2.src=saved; }
     applyPen();
   }, 60);
 }
@@ -623,24 +627,15 @@ cvs.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=tr
 cvs.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!isDrawing)return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; },{passive:false});
 cvs.addEventListener('touchend',   function(e){ e.preventDefault(); isDrawing=false; ctx.beginPath(); },{passive:false});
 
-async function penSave() {
-  var btn=document.getElementById('btnDone');
-  btn.disabled=true; btn.textContent='변환 중...';
-  try {
-    var result=await Tesseract.recognize(cvs,'kor');
-    var txt=result.data.text.trim().replace(/[\n\r]+/g,' ').replace(/\s{2,}/g,' ');
-    if (txt) lsSet(skey(penDk,penR,'txt'), txt);
-    else lsDel(skey(penDk,penR,'txt'));
-    refreshRemark(penDk, penR);
-    penClose();
-  } catch(e) {
-    alert('인식 실패 — 다시 시도해주세요');
-  }
-  btn.disabled=false; btn.textContent='완료';
+function penSave() {
+  var url=cvs.toDataURL('image/png');
+  lsSet(skey(penDk,penR,'img'), url);
+  refreshRemark(penDk, penR);
+  penClose();
 }
 function penReset() {
   cvsClear();
-  lsDel(skey(penDk,penR,'txt'));
+  lsDel(skey(penDk,penR,'img'));
   refreshRemark(penDk, penR);
   penClose();
 }
