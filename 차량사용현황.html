@@ -495,7 +495,7 @@ function makeSelect(opts, cur, key) {
 
 /* ③ 시간 버튼 */
 function fmtTimeBtnHtml(val) {
-  if (!val) return '시간';
+  if (!val) return '클릭';
   var p=val.split('~');
   return p.length===2 ? p[0]+'<br>—<br>'+p[1] : val;
 }
@@ -504,7 +504,7 @@ function makeTimeBtn(dk, r, di) {
   var btn=document.createElement('button');
   btn.className='time-btn';
   var val=lsGet(skey(dk,r,'t'));
-  btn.innerHTML = val ? fmtTimeBtnHtml(val) : '시간';
+  btn.innerHTML = val ? fmtTimeBtnHtml(val) : '클릭';
   btn.classList.add(val ? 'has-val' : 'empty');
   btn.dataset.dk=dk; btn.dataset.r=r; btn.dataset.di=di;
   btn.addEventListener('click', (function(pdk,pr,pdi){
@@ -521,7 +521,7 @@ function refreshRemark(dk2, r2) {
       if (imgVal) {
         var img=document.createElement('img'); img.src=imgVal; pen.appendChild(img);
       } else {
-        var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='터치'; pen.appendChild(ph);
+        var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='클릭'; pen.appendChild(ph);
       }
       var td=pen.closest('td');
       if (td) { var rst=td.querySelector('.cell-rst'); if(rst) imgVal?rst.classList.add('show'):rst.classList.remove('show'); }
@@ -540,7 +540,7 @@ function makeRemarkCell(dk, r, di) {
   if (imgVal) {
     var img=document.createElement('img'); img.src=imgVal; pen.appendChild(img);
   } else {
-    var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='터치'; pen.appendChild(ph);
+    var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='클릭'; pen.appendChild(ph);
   }
   pen.addEventListener('click', (function(pdk,pr,pdi){ return function(){ penOpen(pdk,pr,pdi); }; })(dk,r,di));
 
@@ -776,7 +776,7 @@ function tpReset() {
   lsDel(skey(tpDk,tpR,'t'));
   document.querySelectorAll('.time-btn').forEach(function(btn){
     if (btn.dataset.dk===tpDk && parseInt(btn.dataset.r)===tpR) {
-      btn.innerHTML='시간';
+      btn.innerHTML='클릭';
       btn.classList.remove('has-val'); btn.classList.add('empty');
     }
   });
