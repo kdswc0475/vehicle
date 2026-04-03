@@ -127,8 +127,19 @@
     .time-btn.has-val { color:#000; font-weight:bold; }
     .time-btn.empty   { color:#ccc; }
 
+    /* ─ 셀 리셋 버튼 ─ */
+    .cell-wrap { position:relative; width:100%; height:100%; }
+    .cell-rst {
+      position:absolute; top:1px; right:1px;
+      width:16px; height:16px; font-size:12px; line-height:1;
+      background:#e53935; color:#fff; border:none; border-radius:50%;
+      cursor:pointer; display:none; align-items:center; justify-content:center;
+      padding:0; z-index:5; font-weight:bold;
+    }
+    .cell-rst.show { display:flex; }
+
     /* ─ 비고 셀 ─ */
-    .remark-td { padding:0; vertical-align:top; }
+    .remark-td { padding:0; vertical-align:top; position:relative; }
     .remark-wrap { display:flex; flex-direction:column; height: calc((100vh - 146px) / 8); }
     .remark-pen {
       flex:1; display:flex; align-items:center; justify-content:center;
@@ -384,6 +395,7 @@ var wOff  = 0;
 /* ─────────────────────── 스토리지 ─────────────────── */
 function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+function lsDel(k) { try { localStorage.removeItem(k); } catch(e) {} }
 function skey(dk, r, f) { return 'car|' + dk + '|' + r + '|' + f; }
 
 /* ─────────────────────── 날짜 ─────────────────────── */
@@ -471,6 +483,7 @@ function buildTable() {
 }
 
 function makeSelect(opts, cur, key) {
+  var wrap=document.createElement('div'); wrap.className='cell-wrap';
   var sel=document.createElement('select');
   for (var i=0; i<opts.length; i++) {
     var op=document.createElement('option');
@@ -478,12 +491,19 @@ function makeSelect(opts, cur, key) {
     if (opts[i]===cur) op.selected=true;
     sel.appendChild(op);
   }
-  (function(k){ sel.addEventListener('change', function(){ lsSet(k,this.value); }); })(key);
-  return sel;
+  var rst=document.createElement('button');
+  rst.className='cell-rst'+(cur?' show':''); rst.textContent='×'; rst.title='초기화';
+  (function(k,s,r){
+    s.addEventListener('change', function(){ lsSet(k,this.value); this.value?r.classList.add('show'):r.classList.remove('show'); });
+    r.addEventListener('click', function(e){ e.stopPropagation(); s.value=''; lsDel(k); r.classList.remove('show'); });
+  })(key,sel,rst);
+  wrap.appendChild(sel); wrap.appendChild(rst);
+  return wrap;
 }
 
 /* ③ 시간 버튼 */
 function makeTimeBtn(dk, r, di) {
+  var wrap=document.createElement('div'); wrap.className='cell-wrap';
   var btn=document.createElement('button');
   btn.className='time-btn';
   var val=lsGet(skey(dk,r,'t'));
@@ -493,7 +513,33 @@ function makeTimeBtn(dk, r, di) {
   btn.addEventListener('click', (function(pdk,pr,pdi){
     return function(){ tpOpen(pdk,pr,pdi); };
   })(dk,r,di));
-  return btn;
+  var rst=document.createElement('button');
+  rst.className='cell-rst'+(val?' show':''); rst.textContent='×'; rst.title='초기화';
+  (function(k,b,rs){
+    rs.addEventListener('click', function(e){
+      e.stopPropagation(); lsDel(k);
+      b.textContent='시간'; b.classList.remove('has-val'); b.classList.add('empty');
+      rs.classList.remove('show'); highlightActive();
+    });
+  })(skey(dk,r,'t'),btn,rst);
+  wrap.appendChild(btn); wrap.appendChild(rst);
+  return wrap;
+}
+
+function refreshRemark(dk2, r2) {
+  document.querySelectorAll('.remark-pen').forEach(function(pen) {
+    if (pen.dataset.dk===dk2 && parseInt(pen.dataset.r)===r2) {
+      var imgVal=lsGet(skey(dk2,r2,'img'));
+      pen.innerHTML='';
+      if (imgVal) {
+        var img=document.createElement('img'); img.src=imgVal; pen.appendChild(img);
+      } else {
+        var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='터치'; pen.appendChild(ph);
+      }
+      var td=pen.closest('td');
+      if (td) { var rst=td.querySelector('.cell-rst'); if(rst) imgVal?rst.classList.add('show'):rst.classList.remove('show'); }
+    }
+  });
 }
 
 function makeRemarkCell(dk, r, di) {
@@ -510,6 +556,12 @@ function makeRemarkCell(dk, r, di) {
     var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='터치'; pen.appendChild(ph);
   }
   pen.addEventListener('click', (function(pdk,pr,pdi){ return function(){ penOpen(pdk,pr,pdi); }; })(dk,r,di));
+
+  var rst=document.createElement('button');
+  rst.className='cell-rst'+(imgVal?' show':''); rst.textContent='×'; rst.title='비고 초기화';
+  (function(dk3,r3,rs){ rs.addEventListener('click', function(e){ e.stopPropagation(); lsDel(skey(dk3,r3,'img')); refreshRemark(dk3,r3); }); })(dk,r,rst);
+  td.appendChild(rst);
+
   wrap.appendChild(pen);
 
   var incha=document.createElement('div'); incha.className='remark-incha';
@@ -569,12 +621,7 @@ function cvsClear() {
 function penSave() {
   var url=cvs.toDataURL('image/png');
   lsSet(skey(penDk,penR,'img'), url);
-  document.querySelectorAll('.remark-pen').forEach(function(div){
-    if (div.dataset.dk===penDk && parseInt(div.dataset.r)===penR) {
-      div.innerHTML='';
-      var img=document.createElement('img'); img.src=url; div.appendChild(img);
-    }
-  });
+  refreshRemark(penDk, penR);
   penClose();
 }
 
@@ -734,6 +781,8 @@ function tpDone() {
     if (btn.dataset.dk===tpDk && parseInt(btn.dataset.r)===tpR) {
       btn.textContent=val;
       btn.classList.remove('empty'); btn.classList.add('has-val');
+      var rst=btn.parentNode.querySelector('.cell-rst');
+      if (rst) rst.classList.add('show');
     }
   });
   highlightActive(); /* 시간 저장 즉시 하이라이트 갱신 */
