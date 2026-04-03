@@ -553,7 +553,7 @@ function makeRemarkCell(dk, r, di) {
   incha.appendChild(document.createTextNode('입차'));
   var chk=document.createElement('input'); chk.type='checkbox';
   chk.checked=(lsGet(skey(dk,r,'i'))==='true');
-  (function(k){ chk.addEventListener('change', function(){ lsSet(k, this.checked?'true':'false'); }); })(skey(dk,r,'i'));
+  (function(k){ chk.addEventListener('change', function(){ lsSet(k, this.checked?'true':'false'); highlightActive(); }); })(skey(dk,r,'i'));
   incha.appendChild(chk);
   wrap.appendChild(incha);
 
@@ -793,6 +793,8 @@ function highlightActive() {
     if (!m) continue;
     var startMins = parseInt(m[1]) * 60 + parseInt(m[2]);
     var endMins   = parseInt(m[3]) * 60 + parseInt(m[4]);
+    /* 입차 체크됐으면 운행 종료로 간주 → 하이라이트 제외 */
+    if (lsGet(skey(todayKey, r, 'i')) === 'true') continue;
     /* 현재 시각이 출발~도착 사이이면 해당 행 4셀 모두 파란색 */
     if (curMins >= startMins && curMins < endMins) {
       document.querySelectorAll(
