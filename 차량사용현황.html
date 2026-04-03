@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <!-- Galaxy Tab A6 SM-P580: 1920×1200 물리픽셀, DPR≈1.5 → CSS 뷰포트 1280×800(가로) -->
   <meta name="viewport" content="width=1280, initial-scale=1.0, user-scalable=yes">
   <meta name="mobile-web-app-capable" content="yes">
   <title>차량 사용 현황</title>
@@ -15,227 +14,192 @@
       padding: 6px;
     }
 
-    /* ─ 제목 ─ */
-    .wrap-title {
-      text-align: center;
-      margin-bottom: 4px;
-    }
+    /* ─ ① 제목 폰트 크기 크게 ─ */
+    .wrap-title { text-align: center; margin-bottom: 4px; }
     .main-title {
-      font-size: 26px;
+      font-size: 34px;           /* ← 26→34px */
       font-weight: bold;
       letter-spacing: 10px;
       text-decoration: underline;
       display: inline-block;
     }
-    .sub-notice {
-      font-size: 12px;
-      margin-top: 5px;
-    }
+    .sub-notice { font-size: 12px; margin-top: 5px; }
 
     /* ─ 주 이동 ─ */
     .week-nav {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      margin: 8px 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; margin: 8px 0;
     }
     .week-nav button {
-      padding: 5px 16px;
-      font-size: 12px;
-      font-family: inherit;
-      border: 1px solid #666;
-      border-radius: 4px;
-      background: #f2f2f2;
-      cursor: pointer;
+      padding: 5px 16px; font-size: 12px; font-family: inherit;
+      border: 1px solid #666; border-radius: 4px;
+      background: #f2f2f2; cursor: pointer;
     }
-    .btn-today { background: #1565c0 !important; color: #fff !important; border-color: #0d47a1 !important; }
-    #weekLabel { font-size: 13px; font-weight: bold; min-width: 190px; text-align: center; }
+    .btn-today { background:#1565c0!important; color:#fff!important; border-color:#0d47a1!important; }
+    #weekLabel { font-size:13px; font-weight:bold; min-width:190px; text-align:center; }
 
     /* ─ 테이블 ─ */
-    .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { border-collapse:collapse; width:100%; min-width:1200px; border:2px solid #000; }
+    th, td { border:1px solid #666; text-align:center; vertical-align:middle; padding:0; font-size:11px; }
 
-    table {
-      border-collapse: collapse;
-      /* 1280px CSS 뷰포트(Galaxy Tab A6 가로) – 좌우 패딩 6px×2=12px 고려 → 1268px 사용 */
-      width: 100%;
-      min-width: 1200px;
-      border: 2px solid #000;
+    .th-date { font-size:15px; font-weight:bold; padding:7px 4px; letter-spacing:1px; }
+    .th-today { background:#e3f2fd; color:#0d47a1; }
+    .th-sub { font-size:10px; padding:4px 1px; background:#fafafa; }
+
+    .cV { width:35px; }
+    .cT { width:52px; }
+    .cU { width:52px; }
+    .cR { width:72px; }
+    .drow { height:62px; }
+
+    /* ─ ① 차량/사용자 가운데 정렬 ─ */
+    select {
+      width:100%; border:none; background:transparent;
+      font-family:inherit; font-size:10px;
+      text-align:center; text-align-last:center;   /* ← 핵심 */
+      outline:none; -webkit-appearance:none; appearance:none;
+      padding:2px 0; cursor:pointer;
     }
 
-    th, td {
-      border: 1px solid #666;
-      text-align: center;
-      vertical-align: middle;
-      padding: 0;
-      font-size: 11px;
+    /* ─ 시간 셀 버튼 ─ */
+    .time-btn {
+      width:100%; height:100%; border:none; background:transparent;
+      font-family:inherit; font-size:10px; color:#333;
+      cursor:pointer; padding:2px 1px; text-align:center;
+      display:flex; align-items:center; justify-content:center;
+      min-height:30px;
     }
-
-    /* 날짜 헤더 */
-    .th-date {
-      font-size: 15px;
-      font-weight: bold;
-      padding: 7px 4px;
-      letter-spacing: 1px;
-    }
-    .th-today { background: #e3f2fd; color: #0d47a1; }
-
-    /* 서브 헤더 */
-    .th-sub { font-size: 10px; padding: 4px 1px; background: #fafafa; }
-
-    /* 컬럼 너비 – 1268px ÷ 6일 = 211px/일 → 차량35+시간52+사용자52+비고72=211 */
-    .cV { width: 35px; }
-    .cT { width: 52px; }
-    .cU { width: 52px; }
-    .cR { width: 72px; }
-
-    /* 데이터 행 */
-    .drow { height: 62px; }
-
-    /* 입력 요소 */
-    select, input[type="text"] {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      font-size: 10px;
-      text-align: center;
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      padding: 2px 0;
-      cursor: pointer;
-    }
+    .time-btn.has-val { color:#000; font-weight:bold; }
+    .time-btn.empty   { color:#ccc; }
 
     /* ─ 비고 셀 ─ */
-    /* PDF와 동일하게: 상단 여백(손글씨 공간) + 하단 "입차 □" */
-    .remark-td {
-      padding: 0;
-      vertical-align: top;
-    }
-    .remark-wrap {
-      display: flex;
-      flex-direction: column;
-      height: 62px;
-    }
-    /* 상단: 손글씨 영역 (PDF의 빈 공간) */
+    .remark-td { padding:0; vertical-align:top; }
+    .remark-wrap { display:flex; flex-direction:column; height:62px; }
     .remark-pen {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      overflow: hidden;
-      border-bottom: 1px solid #bbb;
-      background: #fff;
+      flex:1; display:flex; align-items:center; justify-content:center;
+      cursor:pointer; overflow:hidden; border-bottom:1px solid #bbb; background:#fff;
     }
-    .remark-pen:active { background: #fffde7; }
-    .remark-pen img { width: 100%; height: 100%; object-fit: contain; display: block; }
-    .remark-ph { font-size: 8px; color: #ccc; pointer-events: none; }
-
-    /* 하단: 입차 □ – PDF와 동일한 배치 */
+    .remark-pen:active { background:#fffde7; }
+    .remark-pen img { width:100%; height:100%; object-fit:contain; display:block; }
+    .remark-ph { font-size:8px; color:#ccc; pointer-events:none; }
     .remark-incha {
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      font-size: 10px;
-      letter-spacing: 0;
+      height:24px; display:flex; align-items:center; justify-content:center;
+      gap:3px; font-size:10px;
     }
     .remark-incha input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-      cursor: pointer;
-      accent-color: #000;
-      flex-shrink: 0;
+      width:15px; height:15px; cursor:pointer; accent-color:#000; flex-shrink:0;
     }
 
-    /* ─ 펜 모달 ─ */
-    #modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 500;
-      align-items: center;
-      justify-content: center;
+    /* ══════════════════════════════════════
+       ─ ② 비고 모달 – 전체화면 새창 스타일 ─
+       ══════════════════════════════════════ */
+    .fullmodal {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.75); z-index:600;
+      align-items:center; justify-content:center;
     }
-    #modal.open { display: flex; }
+    .fullmodal.open { display:flex; }
 
-    .mbox {
-      background: #fff;
-      border-radius: 10px;
-      padding: 18px;
-      width: 710px;
-      max-width: 96vw;
-      box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    /* 비고 창 */
+    .pen-box {
+      background:#fff; border-radius:12px;
+      width:92vw; max-width:1000px;
+      padding:20px 24px 18px;
+      box-shadow:0 10px 40px rgba(0,0,0,.45);
+      display:flex; flex-direction:column; gap:12px;
     }
-    .mhead {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      margin-bottom: 10px;
+    .pen-head {
+      display:flex; align-items:center; justify-content:space-between;
     }
-    .mhead h2 { font-size: 16px; }
-    .mhead span { font-size: 11px; color: #777; }
+    .pen-head h2 { font-size:18px; font-weight:bold; }
+    .pen-head .pen-info { font-size:12px; color:#777; }
 
-    .mtool {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-      font-size: 11px;
-      color: #555;
+    .pen-toolbar {
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      font-size:12px; color:#555;
     }
     .tbtn {
-      padding: 5px 12px;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-      background: #f0f0f0;
-      font-size: 11px;
-      font-family: inherit;
-      cursor: pointer;
+      padding:8px 16px; border:1px solid #aaa; border-radius:6px;
+      background:#f0f0f0; font-size:12px; font-family:inherit; cursor:pointer;
     }
-    .tbtn.on { background: #333; color: #fff; border-color: #333; }
+    .tbtn.on { background:#333; color:#fff; border-color:#333; }
     .cdot {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      border: 2px solid #bbb;
-      cursor: pointer;
-      flex-shrink: 0;
+      width:28px; height:28px; border-radius:50%;
+      border:2px solid #bbb; cursor:pointer; flex-shrink:0;
     }
-    .cdot.on { border: 3px solid #222; box-shadow: 0 0 0 1px #222; }
+    .cdot.on { border:3px solid #222; box-shadow:0 0 0 2px #222; }
 
     #cvs {
-      display: block;
-      width: 100%;
-      height: 230px;
-      border: 2px solid #333;
-      border-radius: 4px;
-      touch-action: none;
-      cursor: crosshair;
-      background: #fffde7;
+      display:block; width:100%; height:320px;
+      border:2px solid #555; border-radius:6px;
+      touch-action:none; cursor:crosshair; background:#fffde7;
     }
 
-    .mbtns {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-      justify-content: flex-end;
+    .pen-btns {
+      display:flex; gap:12px; justify-content:flex-end;
     }
-    .mbtn {
-      padding: 9px 22px;
-      border-radius: 5px;
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-      border: none;
+    .pbtn {
+      padding:12px 28px; border-radius:7px; font-size:14px;
+      font-family:inherit; cursor:pointer; border:none; font-weight:bold;
     }
-    .mbtn-clear  { background: #e0e0e0; border: 1px solid #aaa; }
-    .mbtn-cancel { background: #c62828; color: #fff; }
-    .mbtn-save   { background: #2e7d32; color: #fff; font-weight: bold; }
+    .pbtn-clear  { background:#e0e0e0; border:1px solid #aaa; font-weight:normal; }
+    .pbtn-cancel { background:#c62828; color:#fff; }
+    .pbtn-done   { background:#1565c0; color:#fff; font-size:16px; padding:12px 40px; }
+
+    /* ══════════════════════════════════════
+       ─ ③ 시간 다이얼 모달 ─
+       ══════════════════════════════════════ */
+    .fullmodal.tp-modal .tp-box {
+      background:#fff; border-radius:12px;
+      width:700px; max-width:94vw;
+      padding:22px 28px 20px;
+      box-shadow:0 10px 40px rgba(0,0,0,.45);
+    }
+    .tp-title { font-size:18px; font-weight:bold; margin-bottom:6px; }
+    .tp-sub   { font-size:12px; color:#777; margin-bottom:18px; }
+
+    .tp-cols {
+      display:flex; gap:30px; justify-content:center; margin-bottom:20px;
+    }
+    .tp-col { display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .tp-col-label { font-size:13px; font-weight:bold; color:#444; margin-bottom:4px; }
+
+    .tp-dials { display:flex; align-items:center; gap:6px; }
+    .tp-sep { font-size:28px; font-weight:bold; color:#333; padding-bottom:4px; }
+
+    .dial {
+      display:flex; flex-direction:column; align-items:center;
+      border:2px solid #bbb; border-radius:10px; overflow:hidden;
+      width:72px;
+    }
+    .dial-up, .dial-dn {
+      width:100%; height:52px;
+      display:flex; align-items:center; justify-content:center;
+      background:#f5f5f5; font-size:22px; cursor:pointer;
+      user-select:none; -webkit-user-select:none;
+      border:none; font-family:inherit;
+    }
+    .dial-up:active, .dial-dn:active { background:#ddd; }
+    .dial-val {
+      width:100%; height:60px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:30px; font-weight:bold; background:#fff;
+      border-top:1px solid #ddd; border-bottom:1px solid #ddd;
+    }
+
+    .tp-preview {
+      text-align:center; font-size:22px; font-weight:bold;
+      background:#e8f4fd; border-radius:8px; padding:12px;
+      color:#1565c0; letter-spacing:2px; margin-bottom:20px;
+    }
+    .tp-btns { display:flex; gap:12px; justify-content:flex-end; }
+    .tpbtn {
+      padding:12px 30px; border-radius:7px; font-size:14px;
+      font-family:inherit; cursor:pointer; border:none; font-weight:bold;
+    }
+    .tpbtn-cancel { background:#e0e0e0; border:1px solid #aaa; font-weight:normal; }
+    .tpbtn-done   { background:#2e7d32; color:#fff; font-size:16px; padding:12px 40px; }
   </style>
 </head>
 <body>
@@ -262,37 +226,96 @@
   </table>
 </div>
 
-<!-- ─ 펜 모달 ─ -->
-<div id="modal">
-  <div class="mbox">
-    <div class="mhead">
+<!-- ══════════════════════════════════
+     ② 비고 손글씨 모달 (전체화면 새창)
+     ══════════════════════════════════ -->
+<div class="fullmodal" id="penModal">
+  <div class="pen-box">
+    <div class="pen-head">
       <h2>✏️ 비고 작성</h2>
-      <span id="minfo"></span>
+      <span class="pen-info" id="penInfo"></span>
     </div>
-    <div class="mtool">
+    <div class="pen-toolbar">
       <span>굵기:</span>
       <button class="tbtn on" id="ps1" onclick="pSize(2,'ps1')">얇게</button>
       <button class="tbtn"    id="ps2" onclick="pSize(4,'ps2')">보통</button>
       <button class="tbtn"    id="ps3" onclick="pSize(7,'ps3')">굵게</button>
-      <span style="margin-left:10px">색상:</span>
-      <div class="cdot on" id="pc1" style="background:#111"     onclick="pColor('#111','pc1')"    title="검정"></div>
-      <div class="cdot"    id="pc2" style="background:#1565c0"  onclick="pColor('#1565c0','pc2')" title="파랑"></div>
-      <div class="cdot"    id="pc3" style="background:#b71c1c"  onclick="pColor('#b71c1c','pc3')" title="빨강"></div>
-      <button class="tbtn" id="eraser" onclick="pEraser()" style="margin-left:10px">지우개</button>
+      <span style="margin-left:14px">색상:</span>
+      <div class="cdot on" id="pc1" style="background:#111"    onclick="pColor('#111','pc1')"    title="검정"></div>
+      <div class="cdot"    id="pc2" style="background:#1565c0" onclick="pColor('#1565c0','pc2')" title="파랑"></div>
+      <div class="cdot"    id="pc3" style="background:#b71c1c" onclick="pColor('#b71c1c','pc3')" title="빨강"></div>
+      <button class="tbtn" id="eraser" onclick="pEraser()" style="margin-left:14px">지우개</button>
+      <button class="tbtn pbtn-clear" onclick="cvsClear()" style="margin-left:auto">전체 지우기</button>
     </div>
     <canvas id="cvs"></canvas>
-    <div class="mbtns">
-      <button class="mbtn mbtn-clear"  onclick="cvsClear()">전체 지우기</button>
-      <button class="mbtn mbtn-cancel" onclick="modalClose()">취소</button>
-      <button class="mbtn mbtn-save"   onclick="cvsave()">저장</button>
+    <div class="pen-btns">
+      <button class="pbtn pbtn-cancel" onclick="penClose()">취소</button>
+      <button class="pbtn pbtn-done"   onclick="penSave()">완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ③ 시간 다이얼 모달
+     ══════════════════════════════════ -->
+<div class="fullmodal tp-modal" id="tpModal">
+  <div class="tp-box">
+    <div class="tp-title">⏰ 시간 선택</div>
+    <div class="tp-sub" id="tpInfo"></div>
+
+    <div class="tp-cols">
+      <!-- 출발 -->
+      <div class="tp-col">
+        <div class="tp-col-label">출 발</div>
+        <div class="tp-dials">
+          <div class="dial">
+            <button class="dial-up" ontouchstart="startRepeat('sh',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('sh',-1)" onmouseup="stopRepeat()">▲</button>
+            <div class="dial-val" id="dsh">09</div>
+            <button class="dial-dn" ontouchstart="startRepeat('sh',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('sh',1)"  onmouseup="stopRepeat()">▼</button>
+          </div>
+          <div class="tp-sep">:</div>
+          <div class="dial">
+            <button class="dial-up" ontouchstart="startRepeat('sm',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('sm',-1)" onmouseup="stopRepeat()">▲</button>
+            <div class="dial-val" id="dsm">00</div>
+            <button class="dial-dn" ontouchstart="startRepeat('sm',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('sm',1)"  onmouseup="stopRepeat()">▼</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;font-size:30px;color:#888;padding-top:30px;">~</div>
+
+      <!-- 도착 -->
+      <div class="tp-col">
+        <div class="tp-col-label">도 착</div>
+        <div class="tp-dials">
+          <div class="dial">
+            <button class="dial-up" ontouchstart="startRepeat('eh',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('eh',-1)" onmouseup="stopRepeat()">▲</button>
+            <div class="dial-val" id="deh">17</div>
+            <button class="dial-dn" ontouchstart="startRepeat('eh',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('eh',1)"  onmouseup="stopRepeat()">▼</button>
+          </div>
+          <div class="tp-sep">:</div>
+          <div class="dial">
+            <button class="dial-up" ontouchstart="startRepeat('em',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('em',-1)" onmouseup="stopRepeat()">▲</button>
+            <div class="dial-val" id="dem">00</div>
+            <button class="dial-dn" ontouchstart="startRepeat('em',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('em',1)"  onmouseup="stopRepeat()">▼</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tp-preview" id="tpPreview">09:00 ~ 17:00</div>
+
+    <div class="tp-btns">
+      <button class="tpbtn tpbtn-cancel" onclick="tpClose()">취소</button>
+      <button class="tpbtn tpbtn-done"   onclick="tpDone()">완료</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ─────────────────── 상수 ─────────────────── */
+/* ─────────────────────── 상수 ─────────────────────── */
 var VEHICLES = ['', 'M1', 'M2', '스타렉스'];
-var USERS    = [
+var USERS = [
   '', '임정백', '박철', '송재우', '김태성', '이성천', '이복희',
   '최희용', '홍예지', '전하영', '전아현', '박은비', '서일배',
   '최수림', '김수빈', '정현주', '김성준', '오기쁨', '이서아', '오영석'
@@ -301,195 +324,138 @@ var DAYKO = ['월요일', '화요일', '수요일', '목요일', '금요일', '�
 var NROWS = 8;
 var wOff  = 0;
 
-/* ─────────────────── 스토리지 ─────────────── */
-function lsGet(k) {
-  try { return localStorage.getItem(k) || ''; } catch(e) { return ''; }
-}
-function lsSet(k, v) {
-  try { localStorage.setItem(k, v); } catch(e) {}
-}
+/* ─────────────────────── 스토리지 ─────────────────── */
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
 function skey(dk, r, f) { return 'car|' + dk + '|' + r + '|' + f; }
 
-/* ─────────────────── 날짜 ──────────────────── */
+/* ─────────────────────── 날짜 ─────────────────────── */
 function getMonday(d) {
-  var t   = new Date(d);
-  var day = t.getDay();
-  /* 일요일(0): 토요일 주가 끝난 뒤 → 다음 주 월요일(+1일)로 이동
-     월~토(1~6): 해당 주 월요일로 이동 */
-  if (day === 0) {
-    t.setDate(t.getDate() + 1);
-  } else {
-    t.setDate(t.getDate() + (1 - day));
-  }
-  t.setHours(0, 0, 0, 0);
+  var t = new Date(d), day = t.getDay();
+  t.setDate(t.getDate() + (day === 0 ? 1 : 1 - day));
+  t.setHours(0,0,0,0);
   return t;
 }
 function weekDates(off) {
   var mon = getMonday(new Date());
   mon.setDate(mon.getDate() + off * 7);
   var arr = [];
-  for (var i = 0; i < 6; i++) {
-    var d = new Date(mon);
-    d.setDate(mon.getDate() + i);
-    arr.push(d);
-  }
+  for (var i = 0; i < 6; i++) { var d = new Date(mon); d.setDate(mon.getDate()+i); arr.push(d); }
   return arr;
 }
-function fmt(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
+function fmt(d) { return (d.getMonth()+1) + '/' + d.getDate(); }
 function dkey(d) {
-  return d.getFullYear() + '-' +
-    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-    String(d.getDate()).padStart(2, '0');
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function isToday(d) {
-  var t = new Date();
-  return d.getFullYear() === t.getFullYear() &&
-         d.getMonth()    === t.getMonth()    &&
-         d.getDate()     === t.getDate();
+  var t=new Date();
+  return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate();
 }
 
-/* ─────────────────── 테이블 빌드 ─────────── */
+/* ─────────────────────── 테이블 빌드 ─────────────── */
 function buildTable() {
   var dates = weekDates(wOff);
-
-  /* 주 레이블 */
   document.getElementById('weekLabel').textContent =
-    dates[0].getFullYear() + '년  ' + fmt(dates[0]) + ' ~ ' + fmt(dates[5]);
+    dates[0].getFullYear()+'년  '+fmt(dates[0])+' ~ '+fmt(dates[5]);
 
-  /* ── thead ── */
   var thead = document.getElementById('tblHead');
   while (thead.firstChild) thead.removeChild(thead.firstChild);
 
-  /* 날짜 행 */
   var tr0 = document.createElement('tr');
-  for (var di = 0; di < 6; di++) {
-    var th0 = document.createElement('th');
-    th0.colSpan = 4;
-    th0.className = 'th-date' + (isToday(dates[di]) ? ' th-today' : '');
-    th0.textContent = fmt(dates[di]) + ' (' + DAYKO[di] + ')';
+  for (var di=0; di<6; di++) {
+    var th0=document.createElement('th'); th0.colSpan=4;
+    th0.className='th-date'+(isToday(dates[di])?' th-today':'');
+    th0.textContent=fmt(dates[di])+' ('+DAYKO[di]+')';
     tr0.appendChild(th0);
   }
   thead.appendChild(tr0);
 
-  /* 서브헤더 행 */
-  var tr1 = document.createElement('tr');
-  var subLabels = ['차  량', '시  간', '사용자', '비  고'];
-  var subCls    = ['cV', 'cT', 'cU', 'cR'];
-  for (var di2 = 0; di2 < 6; di2++) {
-    for (var ci = 0; ci < 4; ci++) {
-      var th1 = document.createElement('th');
-      th1.className = 'th-sub ' + subCls[ci];
-      th1.textContent = subLabels[ci];
-      tr1.appendChild(th1);
+  var tr1=document.createElement('tr');
+  var sLbls=['차  량','시  간','사용자','비  고'], sCls=['cV','cT','cU','cR'];
+  for (var di2=0; di2<6; di2++) {
+    for (var ci=0; ci<4; ci++) {
+      var th1=document.createElement('th');
+      th1.className='th-sub '+sCls[ci]; th1.textContent=sLbls[ci]; tr1.appendChild(th1);
     }
   }
   thead.appendChild(tr1);
 
-  /* ── tbody ── */
-  var tbody = document.getElementById('tblBody');
+  var tbody=document.getElementById('tblBody');
   while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-  for (var r = 0; r < NROWS; r++) {
-    var tr = document.createElement('tr');
-    tr.className = 'drow';
-
-    for (var di3 = 0; di3 < 6; di3++) {
-      var dk = dkey(dates[di3]);
+  for (var r=0; r<NROWS; r++) {
+    var tr=document.createElement('tr'); tr.className='drow';
+    for (var di3=0; di3<6; di3++) {
+      var dk=dkey(dates[di3]);
 
       /* 차량 */
-      var tdV = document.createElement('td');
-      tdV.className = 'cV';
-      tdV.appendChild(makeSelect(VEHICLES, lsGet(skey(dk, r, 'v')), skey(dk, r, 'v')));
+      var tdV=document.createElement('td'); tdV.className='cV';
+      tdV.appendChild(makeSelect(VEHICLES, lsGet(skey(dk,r,'v')), skey(dk,r,'v')));
       tr.appendChild(tdV);
 
-      /* 시간 */
-      var tdT = document.createElement('td');
-      tdT.className = 'cT';
-      tdT.appendChild(makeInput(lsGet(skey(dk, r, 't')), skey(dk, r, 't')));
+      /* ③ 시간 – 다이얼 버튼 */
+      var tdT=document.createElement('td'); tdT.className='cT';
+      tdT.appendChild(makeTimeBtn(dk,r,di3));
       tr.appendChild(tdT);
 
       /* 사용자 */
-      var tdU = document.createElement('td');
-      tdU.className = 'cU';
-      tdU.appendChild(makeSelect(USERS, lsGet(skey(dk, r, 'u')), skey(dk, r, 'u')));
+      var tdU=document.createElement('td'); tdU.className='cU';
+      tdU.appendChild(makeSelect(USERS, lsGet(skey(dk,r,'u')), skey(dk,r,'u')));
       tr.appendChild(tdU);
 
       /* 비고 */
-      tr.appendChild(makeRemarkCell(dk, r, di3));
+      tr.appendChild(makeRemarkCell(dk,r,di3));
     }
-
     tbody.appendChild(tr);
   }
 }
 
 function makeSelect(opts, cur, key) {
-  var sel = document.createElement('select');
-  for (var i = 0; i < opts.length; i++) {
-    var op = document.createElement('option');
-    op.value = opts[i];
-    op.textContent = opts[i];
-    if (opts[i] === cur) op.selected = true;
+  var sel=document.createElement('select');
+  for (var i=0; i<opts.length; i++) {
+    var op=document.createElement('option');
+    op.value=opts[i]; op.textContent=opts[i];
+    if (opts[i]===cur) op.selected=true;
     sel.appendChild(op);
   }
-  (function(k) {
-    sel.addEventListener('change', function() { lsSet(k, this.value); });
-  })(key);
+  (function(k){ sel.addEventListener('change', function(){ lsSet(k,this.value); }); })(key);
   return sel;
 }
 
-function makeInput(cur, key) {
-  var inp = document.createElement('input');
-  inp.type = 'text';
-  inp.placeholder = '00:00~00:00';
-  inp.value = cur;
-  (function(k) {
-    inp.addEventListener('change', function() { lsSet(k, this.value); });
-  })(key);
-  return inp;
+/* ③ 시간 버튼 */
+function makeTimeBtn(dk, r, di) {
+  var btn=document.createElement('button');
+  btn.className='time-btn';
+  var val=lsGet(skey(dk,r,'t'));
+  btn.textContent = val || '시간';
+  btn.classList.add(val ? 'has-val' : 'empty');
+  btn.dataset.dk=dk; btn.dataset.r=r; btn.dataset.di=di;
+  btn.addEventListener('click', (function(pdk,pr,pdi){
+    return function(){ tpOpen(pdk,pr,pdi); };
+  })(dk,r,di));
+  return btn;
 }
 
 function makeRemarkCell(dk, r, di) {
-  var td = document.createElement('td');
-  td.className = 'remark-td cR';
+  var td=document.createElement('td'); td.className='remark-td cR';
+  var wrap=document.createElement('div'); wrap.className='remark-wrap';
 
-  var wrap = document.createElement('div');
-  wrap.className = 'remark-wrap';
-
-  /* 상단: 손글씨 영역 */
-  var pen = document.createElement('div');
-  pen.className = 'remark-pen';
-  pen.dataset.dk = dk;
-  pen.dataset.r  = r;
-  pen.dataset.di = di;
-
-  var imgVal = lsGet(skey(dk, r, 'img'));
+  var pen=document.createElement('div'); pen.className='remark-pen';
+  pen.dataset.dk=dk; pen.dataset.r=r; pen.dataset.di=di;
+  var imgVal=lsGet(skey(dk,r,'img'));
   if (imgVal) {
-    var img = document.createElement('img');
-    img.src = imgVal;
-    pen.appendChild(img);
+    var img=document.createElement('img'); img.src=imgVal; pen.appendChild(img);
   } else {
-    var ph = document.createElement('span');
-    ph.className = 'remark-ph';
-    ph.textContent = '터치';
-    pen.appendChild(ph);
+    var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='터치'; pen.appendChild(ph);
   }
-  pen.addEventListener('click', (function(pdk, pr, pdi) {
-    return function() { modalOpen(pdk, pr, pdi); };
-  })(dk, r, di));
-
+  pen.addEventListener('click', (function(pdk,pr,pdi){ return function(){ penOpen(pdk,pr,pdi); }; })(dk,r,di));
   wrap.appendChild(pen);
 
-  /* 하단: 입차 □ */
-  var incha = document.createElement('div');
-  incha.className = 'remark-incha';
-  var lbl = document.createTextNode('입차');
-  incha.appendChild(lbl);
-  var chk = document.createElement('input');
-  chk.type = 'checkbox';
-  chk.checked = (lsGet(skey(dk, r, 'i')) === 'true');
-  (function(k) {
-    chk.addEventListener('change', function() { lsSet(k, this.checked ? 'true' : 'false'); });
-  })(skey(dk, r, 'i'));
+  var incha=document.createElement('div'); incha.className='remark-incha';
+  incha.appendChild(document.createTextNode('입차'));
+  var chk=document.createElement('input'); chk.type='checkbox';
+  chk.checked=(lsGet(skey(dk,r,'i'))==='true');
+  (function(k){ chk.addEventListener('change', function(){ lsSet(k, this.checked?'true':'false'); }); })(skey(dk,r,'i'));
   incha.appendChild(chk);
   wrap.appendChild(incha);
 
@@ -497,162 +463,180 @@ function makeRemarkCell(dk, r, di) {
   return td;
 }
 
-/* ─────────────────── 주 이동 ─────────────── */
-document.getElementById('btnPrev').addEventListener('click', function() { wOff--; buildTable(); });
-document.getElementById('btnNext').addEventListener('click', function() { wOff++; buildTable(); });
-document.getElementById('btnToday').addEventListener('click', function() { wOff = 0; buildTable(); });
+/* ─────────────────────── 주 이동 ─────────────────── */
+document.getElementById('btnPrev').addEventListener('click', function(){ wOff--; buildTable(); });
+document.getElementById('btnNext').addEventListener('click', function(){ wOff++; buildTable(); });
+document.getElementById('btnToday').addEventListener('click', function(){ wOff=0; buildTable(); });
 
-/* ─────────────────── 펜 모달 ─────────────── */
-var penDk = null, penR = null, penDi = null;
-var isDrawing = false, lastX = 0, lastY = 0;
-var penSz = 2, penCol = '#111', eraserOn = false;
+/* ══════════════════════════════════════════════════
+   ② 비고 펜 모달
+   ══════════════════════════════════════════════════ */
+var penDk=null, penR=null, penDi=null;
+var isDrawing=false, lastX=0, lastY=0;
+var penSz=2, penCol='#111', eraserOn=false;
+var cvs=document.getElementById('cvs');
+var ctx=cvs.getContext('2d');
 
-var cvs = document.getElementById('cvs');
-var ctx = cvs.getContext('2d');
-
-function modalOpen(dk, r, di) {
-  penDk = dk; penR = r; penDi = di;
-  document.getElementById('modal').classList.add('open');
-
-  var dates = weekDates(wOff);
-  document.getElementById('minfo').textContent =
-    fmt(dates[di]) + ' (' + DAYKO[di] + ') — ' + (r + 1) + '번째 줄';
-
-  setTimeout(function() {
-    var rect = cvs.getBoundingClientRect();
-    cvs.width  = Math.max(Math.round(rect.width), 400);
-    cvs.height = 230;
-    ctx.fillStyle = '#fffde7';
-    ctx.fillRect(0, 0, cvs.width, cvs.height);
-    var saved = lsGet(skey(dk, r, 'img'));
-    if (saved) {
-      var img2 = new Image();
-      img2.onload = function() { ctx.drawImage(img2, 0, 0, cvs.width, cvs.height); };
-      img2.src = saved;
-    }
+function penOpen(dk, r, di) {
+  penDk=dk; penR=r; penDi=di;
+  document.getElementById('penModal').classList.add('open');
+  var dates=weekDates(wOff);
+  document.getElementById('penInfo').textContent=
+    fmt(dates[di])+' ('+DAYKO[di]+') — '+(r+1)+'번째 줄';
+  setTimeout(function(){
+    var rect=cvs.getBoundingClientRect();
+    cvs.width=Math.max(Math.round(rect.width),400); cvs.height=320;
+    ctx.fillStyle='#fffde7'; ctx.fillRect(0,0,cvs.width,cvs.height);
+    var saved=lsGet(skey(dk,r,'img'));
+    if (saved) { var i2=new Image(); i2.onload=function(){ ctx.drawImage(i2,0,0,cvs.width,cvs.height); }; i2.src=saved; }
     applyPen();
   }, 60);
 }
 
-function modalClose() {
-  document.getElementById('modal').classList.remove('open');
-}
+function penClose() { document.getElementById('penModal').classList.remove('open'); }
 
 function applyPen() {
-  ctx.strokeStyle = eraserOn ? '#fffde7' : penCol;
-  ctx.lineWidth   = eraserOn ? 24 : penSz;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
+  ctx.strokeStyle=eraserOn?'#fffde7':penCol;
+  ctx.lineWidth=eraserOn?28:penSz;
+  ctx.lineCap='round'; ctx.lineJoin='round';
 }
 
 function cvsClear() {
-  ctx.fillStyle = '#fffde7';
-  ctx.fillRect(0, 0, cvs.width, cvs.height);
+  ctx.fillStyle='#fffde7'; ctx.fillRect(0,0,cvs.width,cvs.height);
 }
 
-function cvsave() {
-  var url = cvs.toDataURL('image/png');
-  lsSet(skey(penDk, penR, 'img'), url);
-
-  /* 해당 셀 즉시 갱신 */
-  var divs = document.querySelectorAll('.remark-pen');
-  for (var i = 0; i < divs.length; i++) {
-    if (divs[i].dataset.dk === penDk && parseInt(divs[i].dataset.r) === penR) {
-      divs[i].innerHTML = '';
-      var img3 = document.createElement('img');
-      img3.src = url;
-      divs[i].appendChild(img3);
+function penSave() {
+  var url=cvs.toDataURL('image/png');
+  lsSet(skey(penDk,penR,'img'), url);
+  document.querySelectorAll('.remark-pen').forEach(function(div){
+    if (div.dataset.dk===penDk && parseInt(div.dataset.r)===penR) {
+      div.innerHTML='';
+      var img=document.createElement('img'); img.src=url; div.appendChild(img);
     }
-  }
-  modalClose();
+  });
+  penClose();
 }
 
-function pSize(sz, id) {
-  penSz = sz; eraserOn = false;
+function pSize(sz,id) {
+  penSz=sz; eraserOn=false;
   ['ps1','ps2','ps3'].forEach(function(x){ document.getElementById(x).classList.remove('on'); });
   document.getElementById(id).classList.add('on');
   document.getElementById('eraser').classList.remove('on');
   applyPen();
 }
-
-function pColor(col, id) {
-  penCol = col; eraserOn = false;
+function pColor(col,id) {
+  penCol=col; eraserOn=false;
   document.querySelectorAll('.cdot').forEach(function(d){ d.classList.remove('on'); });
   document.getElementById(id).classList.add('on');
   document.getElementById('eraser').classList.remove('on');
   applyPen();
 }
-
 function pEraser() {
-  eraserOn = !eraserOn;
-  document.getElementById('eraser').classList.toggle('on', eraserOn);
+  eraserOn=!eraserOn;
+  document.getElementById('eraser').classList.toggle('on',eraserOn);
   applyPen();
 }
 
 function getPos(e) {
-  var rect = cvs.getBoundingClientRect();
-  var sx = cvs.width / rect.width;
-  var sy = cvs.height / rect.height;
-  var cx, cy;
-  if (e.touches && e.touches.length) {
-    cx = e.touches[0].clientX; cy = e.touches[0].clientY;
-  } else if (e.changedTouches && e.changedTouches.length) {
-    cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY;
-  } else {
-    cx = e.clientX; cy = e.clientY;
-  }
-  return [(cx - rect.left) * sx, (cy - rect.top) * sy];
+  var rect=cvs.getBoundingClientRect();
+  var sx=cvs.width/rect.width, sy=cvs.height/rect.height;
+  var cx,cy;
+  if (e.touches&&e.touches.length){ cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
+  else if (e.changedTouches&&e.changedTouches.length){ cx=e.changedTouches[0].clientX; cy=e.changedTouches[0].clientY; }
+  else { cx=e.clientX; cy=e.clientY; }
+  return [(cx-rect.left)*sx,(cy-rect.top)*sy];
 }
 
-cvs.addEventListener('mousedown', function(e) {
-  isDrawing = true;
-  var p = getPos(e); lastX = p[0]; lastY = p[1];
-  ctx.beginPath(); ctx.moveTo(lastX, lastY);
-});
-cvs.addEventListener('mousemove', function(e) {
-  if (!isDrawing) return;
-  var p = getPos(e);
-  ctx.lineTo(p[0], p[1]); ctx.stroke();
-  lastX = p[0]; lastY = p[1];
-});
-cvs.addEventListener('mouseup',    function() { isDrawing = false; ctx.beginPath(); });
-cvs.addEventListener('mouseleave', function() { isDrawing = false; ctx.beginPath(); });
+cvs.addEventListener('mousedown', function(e){ isDrawing=true; var p=getPos(e); lastX=p[0]; lastY=p[1]; ctx.beginPath(); ctx.moveTo(lastX,lastY); });
+cvs.addEventListener('mousemove', function(e){ if(!isDrawing) return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; });
+cvs.addEventListener('mouseup',    function(){ isDrawing=false; ctx.beginPath(); });
+cvs.addEventListener('mouseleave', function(){ isDrawing=false; ctx.beginPath(); });
+cvs.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=true; var p=getPos(e); lastX=p[0]; lastY=p[1]; ctx.beginPath(); ctx.moveTo(lastX,lastY); },{passive:false});
+cvs.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!isDrawing) return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; },{passive:false});
+cvs.addEventListener('touchend',   function(e){ e.preventDefault(); isDrawing=false; ctx.beginPath(); },{passive:false});
 
-cvs.addEventListener('touchstart', function(e) {
-  e.preventDefault(); isDrawing = true;
-  var p = getPos(e); lastX = p[0]; lastY = p[1];
-  ctx.beginPath(); ctx.moveTo(lastX, lastY);
-}, {passive: false});
-cvs.addEventListener('touchmove', function(e) {
-  e.preventDefault(); if (!isDrawing) return;
-  var p = getPos(e);
-  ctx.lineTo(p[0], p[1]); ctx.stroke();
-  lastX = p[0]; lastY = p[1];
-}, {passive: false});
-cvs.addEventListener('touchend', function(e) {
-  e.preventDefault(); isDrawing = false; ctx.beginPath();
-}, {passive: false});
+/* ══════════════════════════════════════════════════
+   ③ 시간 다이얼 모달
+   ══════════════════════════════════════════════════ */
+var tpDk=null, tpR=null, tpDi=null;
+var tpVals = { sh:9, sm:0, eh:17, em:0 };
+var repeatTimer=null, repeatInterval=null;
 
-/* ─────────────────── 초기 실행 ─────────────── */
-buildTable(); /* DOMContentLoaded 불필요 — 스크립트가 body 최하단에 위치 */
+function tpOpen(dk, r, di) {
+  tpDk=dk; tpR=r; tpDi=di;
+  var saved=lsGet(skey(dk,r,'t'));
+  /* 저장값 파싱: "09:00~17:00" */
+  var sh=9, sm=0, eh=17, em=0;
+  if (saved) {
+    var m=saved.match(/(\d{1,2}):(\d{2})~(\d{1,2}):(\d{2})/);
+    if (m) { sh=parseInt(m[1]); sm=parseInt(m[2]); eh=parseInt(m[3]); em=parseInt(m[4]); }
+  }
+  tpVals={sh:sh,sm:sm,eh:eh,em:em};
+  tpRefresh();
+  var dates=weekDates(wOff);
+  document.getElementById('tpInfo').textContent=fmt(dates[di])+' ('+DAYKO[di]+') — '+(r+1)+'번째 줄';
+  document.getElementById('tpModal').classList.add('open');
+}
+function tpClose() { document.getElementById('tpModal').classList.remove('open'); }
 
-/* 가로 모드 유도 */
-if (screen.orientation && screen.orientation.lock) {
+function tpRefresh() {
+  document.getElementById('dsh').textContent=pad(tpVals.sh);
+  document.getElementById('dsm').textContent=pad(tpVals.sm);
+  document.getElementById('deh').textContent=pad(tpVals.eh);
+  document.getElementById('dem').textContent=pad(tpVals.em);
+  document.getElementById('tpPreview').textContent=
+    pad(tpVals.sh)+':'+pad(tpVals.sm)+' ~ '+pad(tpVals.eh)+':'+pad(tpVals.em);
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function adjDial(id, dir) {
+  if (id==='sh'||id==='eh') {
+    tpVals[id]=(tpVals[id]+dir+24)%24;
+  } else {
+    tpVals[id]=(tpVals[id]+dir*5+60)%60;
+  }
+  tpRefresh();
+}
+
+function startRepeat(id, dir) {
+  adjDial(id, dir);
+  repeatTimer=setTimeout(function(){
+    repeatInterval=setInterval(function(){ adjDial(id,dir); }, 120);
+  }, 400);
+}
+function stopRepeat() {
+  clearTimeout(repeatTimer); clearInterval(repeatInterval);
+  repeatTimer=null; repeatInterval=null;
+}
+
+function tpDone() {
+  var val=pad(tpVals.sh)+':'+pad(tpVals.sm)+'~'+pad(tpVals.eh)+':'+pad(tpVals.em);
+  lsSet(skey(tpDk,tpR,'t'), val);
+  /* 해당 시간 버튼 즉시 갱신 */
+  document.querySelectorAll('.time-btn').forEach(function(btn){
+    if (btn.dataset.dk===tpDk && parseInt(btn.dataset.r)===tpR) {
+      btn.textContent=val;
+      btn.classList.remove('empty'); btn.classList.add('has-val');
+    }
+  });
+  tpClose();
+}
+
+/* ─────────────────────── 초기 실행 ─────────────────── */
+buildTable();
+
+if (screen.orientation&&screen.orientation.lock) {
   screen.orientation.lock('landscape').catch(function(){});
 }
 
-/* 자정 자동 갱신 – 매일 자정+3초에 테이블 재빌드 */
-(function sched() {
-  var n    = new Date();
-  var next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 3);
-  setTimeout(function() { if (wOff === 0) buildTable(); sched(); }, next - n);
+(function sched(){
+  var n=new Date();
+  var next=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,3);
+  setTimeout(function(){ if(wOff===0) buildTable(); sched(); }, next-n);
 }());
 
-/* 태블릿 잠자기 후 화면 복귀 시 즉시 갱신 */
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden && wOff === 0) {
-    buildTable();
-  }
+document.addEventListener('visibilitychange', function(){
+  if (!document.hidden && wOff===0) buildTable();
 });
 </script>
 </body>
