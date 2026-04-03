@@ -171,14 +171,19 @@
     .pen-head h2 { font-size:18px; font-weight:bold; }
     .pen-head .pen-info { font-size:12px; color:#777; }
 
-    #remarkText {
-      flex:1; min-height:0; width:100%;
+    #cvs {
+      display:block; width:100%; flex:1; min-height:0;
       border:2px solid #555; border-radius:6px;
-      padding:14px 16px;
-      font-family:'Malgun Gothic','맑은 고딕',sans-serif;
-      font-size:20px; line-height:1.7;
-      resize:none; outline:none; color:#111;
+      touch-action:none; cursor:crosshair; background:#fff;
     }
+    .pen-toolbar {
+      display:flex; align-items:center; gap:10px;
+    }
+    .tbtn {
+      padding:8px 16px; border:1px solid #aaa; border-radius:6px;
+      background:#f0f0f0; font-size:13px; font-family:inherit; cursor:pointer;
+    }
+    .tbtn.on { background:#333; color:#fff; border-color:#333; }
     .remark-text {
       font-size:9px; color:#111; display:block;
       width:100%; padding:2px 3px;
@@ -297,11 +302,15 @@
       <h2>✏️ 비고 작성</h2>
       <span class="pen-info" id="penInfo"></span>
     </div>
-    <textarea id="remarkText" placeholder="내용을 입력하세요..."></textarea>
+    <canvas id="cvs"></canvas>
+    <div class="pen-toolbar">
+      <button class="tbtn" id="eraser" onclick="pEraser()">지우개</button>
+      <button class="tbtn" onclick="cvsClear()">전체 지우기</button>
+    </div>
     <div class="pen-btns">
       <button class="pbtn pbtn-cancel" onclick="penClose()">취소</button>
       <button class="pbtn pbtn-reset"  onclick="penReset()">초기화</button>
-      <button class="pbtn pbtn-done"   onclick="penSave()">완료</button>
+      <button class="pbtn pbtn-done"   id="btnDone" onclick="penSave()">완료</button>
     </div>
   </div>
 </div>
@@ -364,6 +373,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 /* ─────────────────────── 상수 ─────────────────────── */
 var VEHICLES = ['', 'M1', 'M2', '스타렉스'];
@@ -554,9 +564,13 @@ document.getElementById('btnNext').addEventListener('click', function(){ wOff++;
 document.getElementById('btnToday').addEventListener('click', function(){ wOff=0; buildTable(); });
 
 /* ══════════════════════════════════════════════════
-   ② 비고 텍스트 모달
+   ② 비고 손글씨→OCR 모달
    ══════════════════════════════════════════════════ */
 var penDk=null, penR=null, penDi=null;
+var isDrawing=false, lastX=0, lastY=0;
+var eraserOn=false;
+var cvs=document.getElementById('cvs');
+var ctx=cvs.getContext('2d');
 
 function penOpen(dk, r, di) {
   penDk=dk; penR=r; penDi=di;
@@ -564,21 +578,68 @@ function penOpen(dk, r, di) {
   var dates=weekDates(wOff);
   document.getElementById('penInfo').textContent=
     fmt(dates[di])+' ('+DAYKO[di]+') — '+(r+1)+'번째 줄';
-  var ta=document.getElementById('remarkText');
-  ta.value=lsGet(skey(dk,r,'txt'));
-  setTimeout(function(){ ta.focus(); }, 60);
+  document.getElementById('ocrResult').value = lsGet(skey(dk,r,'txt'));
+  document.getElementById('eraser').classList.remove('on');
+  eraserOn=false;
+  setTimeout(function(){
+    var rect=cvs.getBoundingClientRect();
+    cvs.width=Math.max(Math.round(rect.width),400);
+    cvs.height=Math.max(Math.round(rect.height),200);
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,cvs.width,cvs.height);
+    applyPen();
+  }, 60);
 }
 
 function penClose() { document.getElementById('penModal').classList.remove('open'); }
 
-function penSave() {
-  var txt=document.getElementById('remarkText').value.trim();
-  if (txt) lsSet(skey(penDk,penR,'txt'), txt);
-  else lsDel(skey(penDk,penR,'txt'));
-  refreshRemark(penDk, penR);
-  penClose();
+function applyPen() {
+  ctx.strokeStyle=eraserOn?'#fff':'#111';
+  ctx.lineWidth=eraserOn?28:5;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+}
+function cvsClear() {
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,cvs.width,cvs.height);
+}
+function pEraser() {
+  eraserOn=!eraserOn;
+  document.getElementById('eraser').classList.toggle('on',eraserOn);
+  applyPen();
+}
+
+function getPos(e) {
+  var rect=cvs.getBoundingClientRect();
+  var sx=cvs.width/rect.width, sy=cvs.height/rect.height;
+  var cx,cy;
+  if (e.touches&&e.touches.length){ cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
+  else if (e.changedTouches&&e.changedTouches.length){ cx=e.changedTouches[0].clientX; cy=e.changedTouches[0].clientY; }
+  else { cx=e.clientX; cy=e.clientY; }
+  return [(cx-rect.left)*sx,(cy-rect.top)*sy];
+}
+cvs.addEventListener('mousedown',  function(e){ isDrawing=true; var p=getPos(e); lastX=p[0]; lastY=p[1]; ctx.beginPath(); ctx.moveTo(lastX,lastY); });
+cvs.addEventListener('mousemove',  function(e){ if(!isDrawing)return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; });
+cvs.addEventListener('mouseup',    function(){ isDrawing=false; ctx.beginPath(); });
+cvs.addEventListener('mouseleave', function(){ isDrawing=false; ctx.beginPath(); });
+cvs.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=true; var p=getPos(e); lastX=p[0]; lastY=p[1]; ctx.beginPath(); ctx.moveTo(lastX,lastY); },{passive:false});
+cvs.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!isDrawing)return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; },{passive:false});
+cvs.addEventListener('touchend',   function(e){ e.preventDefault(); isDrawing=false; ctx.beginPath(); },{passive:false});
+
+async function penSave() {
+  var btn=document.getElementById('btnDone');
+  btn.disabled=true; btn.textContent='변환 중...';
+  try {
+    var result=await Tesseract.recognize(cvs,'kor');
+    var txt=result.data.text.trim().replace(/[\n\r]+/g,' ').replace(/\s{2,}/g,' ');
+    if (txt) lsSet(skey(penDk,penR,'txt'), txt);
+    else lsDel(skey(penDk,penR,'txt'));
+    refreshRemark(penDk, penR);
+    penClose();
+  } catch(e) {
+    alert('인식 실패 — 다시 시도해주세요');
+  }
+  btn.disabled=false; btn.textContent='완료';
 }
 function penReset() {
+  cvsClear();
   lsDel(skey(penDk,penR,'txt'));
   refreshRemark(penDk, penR);
   penClose();
