@@ -78,6 +78,15 @@
     */
     .drow { height: calc((100vh - 146px) / 8); }
 
+    /* ─ 운행 중 행 하이라이트 ─ */
+    td.time-active {
+      background-color: #bbdefb !important;
+    }
+    td.time-active.cT .time-btn {
+      color: #0d47a1 !important;
+      font-weight: bold !important;
+    }
+
     /* ─ 차량/사용자 가운데 정렬 ─ */
     select {
       width:100%; border:none; background:transparent;
@@ -414,16 +423,19 @@ function buildTable() {
 
       /* 차량 */
       var tdV=document.createElement('td'); tdV.className='cV';
+      tdV.dataset.dk=dk; tdV.dataset.r=r;
       tdV.appendChild(makeSelect(VEHICLES, lsGet(skey(dk,r,'v')), skey(dk,r,'v')));
       tr.appendChild(tdV);
 
       /* ③ 시간 – 다이얼 버튼 */
       var tdT=document.createElement('td'); tdT.className='cT';
+      tdT.dataset.dk=dk; tdT.dataset.r=r;
       tdT.appendChild(makeTimeBtn(dk,r,di3));
       tr.appendChild(tdT);
 
       /* 사용자 */
       var tdU=document.createElement('td'); tdU.className='cU';
+      tdU.dataset.dk=dk; tdU.dataset.r=r;
       tdU.appendChild(makeSelect(USERS, lsGet(skey(dk,r,'u')), skey(dk,r,'u')));
       tr.appendChild(tdU);
 
@@ -462,6 +474,7 @@ function makeTimeBtn(dk, r, di) {
 
 function makeRemarkCell(dk, r, di) {
   var td=document.createElement('td'); td.className='remark-td cR';
+  td.dataset.dk=dk; td.dataset.r=r;
   var wrap=document.createElement('div'); wrap.className='remark-wrap';
 
   var pen=document.createElement('div'); pen.className='remark-pen';
@@ -643,24 +656,57 @@ function tpDone() {
       btn.classList.remove('empty'); btn.classList.add('has-val');
     }
   });
+  highlightActive(); /* 시간 저장 즉시 하이라이트 갱신 */
   tpClose();
+}
+
+/* ─────────────────────── 운행 중 하이라이트 ─────────── */
+function highlightActive() {
+  /* 기존 하이라이트 전부 제거 */
+  document.querySelectorAll('td.time-active').forEach(function(td) {
+    td.classList.remove('time-active');
+  });
+
+  /* 오늘 날짜만 검사 */
+  var now = new Date();
+  var todayKey = dkey(now);
+  var curMins = now.getHours() * 60 + now.getMinutes();
+
+  for (var r = 0; r < NROWS; r++) {
+    var val = lsGet(skey(todayKey, r, 't'));
+    if (!val) continue;
+    var m = val.match(/(\d{1,2}):(\d{2})~(\d{1,2}):(\d{2})/);
+    if (!m) continue;
+    var startMins = parseInt(m[1]) * 60 + parseInt(m[2]);
+    var endMins   = parseInt(m[3]) * 60 + parseInt(m[4]);
+    /* 현재 시각이 출발~도착 사이이면 해당 행 4셀 모두 파란색 */
+    if (curMins >= startMins && curMins < endMins) {
+      document.querySelectorAll(
+        'td[data-dk="' + todayKey + '"][data-r="' + r + '"]'
+      ).forEach(function(td) { td.classList.add('time-active'); });
+    }
+  }
 }
 
 /* ─────────────────────── 초기 실행 ─────────────────── */
 buildTable();
+highlightActive();
 
 if (screen.orientation&&screen.orientation.lock) {
   screen.orientation.lock('landscape').catch(function(){});
 }
 
+/* 30초마다 하이라이트 갱신 */
+setInterval(highlightActive, 30000);
+
 (function sched(){
   var n=new Date();
   var next=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,3);
-  setTimeout(function(){ if(wOff===0) buildTable(); sched(); }, next-n);
+  setTimeout(function(){ if(wOff===0){ buildTable(); highlightActive(); } sched(); }, next-n);
 }());
 
 document.addEventListener('visibilitychange', function(){
-  if (!document.hidden && wOff===0) buildTable();
+  if (!document.hidden && wOff===0){ buildTable(); highlightActive(); }
 });
 </script>
 </body>
