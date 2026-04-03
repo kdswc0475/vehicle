@@ -137,7 +137,6 @@
       cursor:pointer; overflow:hidden; border-bottom:1px solid #bbb; background:#fff;
     }
     .remark-pen:active { background:#ffffff; }
-    .remark-pen img { width:100%; height:100%; object-fit:contain; display:block; }
     .remark-ph { font-size:8px; color:#ccc; pointer-events:none; }
     .remark-incha {
       height:24px; display:flex; align-items:center; justify-content:center;
@@ -172,25 +171,19 @@
     .pen-head h2 { font-size:18px; font-weight:bold; }
     .pen-head .pen-info { font-size:12px; color:#777; }
 
-    .pen-toolbar {
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-      font-size:12px; color:#555;
-    }
-    .tbtn {
-      padding:8px 16px; border:1px solid #aaa; border-radius:6px;
-      background:#f0f0f0; font-size:12px; font-family:inherit; cursor:pointer;
-    }
-    .tbtn.on { background:#333; color:#fff; border-color:#333; }
-    .cdot {
-      width:28px; height:28px; border-radius:50%;
-      border:2px solid #bbb; cursor:pointer; flex-shrink:0;
-    }
-    .cdot.on { border:3px solid #222; box-shadow:0 0 0 2px #222; }
-
-    #cvs {
-      display:block; width:100%; flex:1; min-height:0;
+    #remarkText {
+      flex:1; min-height:0; width:100%;
       border:2px solid #555; border-radius:6px;
-      touch-action:none; cursor:crosshair; background:#ffffff;
+      padding:14px 16px;
+      font-family:'Malgun Gothic','맑은 고딕',sans-serif;
+      font-size:20px; line-height:1.7;
+      resize:none; outline:none; color:#111;
+    }
+    .remark-text {
+      font-size:9px; color:#111; display:block;
+      width:100%; padding:2px 3px;
+      word-break:break-all; white-space:pre-wrap;
+      overflow:hidden; text-align:left;
     }
 
     .pen-btns {
@@ -304,11 +297,7 @@
       <h2>✏️ 비고 작성</h2>
       <span class="pen-info" id="penInfo"></span>
     </div>
-    <div class="pen-toolbar">
-      <button class="tbtn" id="eraser" onclick="pEraser()">지우개</button>
-      <button class="tbtn pbtn-clear" onclick="cvsClear()" style="margin-left:auto">전체 지우기</button>
-    </div>
-    <canvas id="cvs"></canvas>
+    <textarea id="remarkText" placeholder="내용을 입력하세요..."></textarea>
     <div class="pen-btns">
       <button class="pbtn pbtn-cancel" onclick="penClose()">취소</button>
       <button class="pbtn pbtn-reset"  onclick="penReset()">초기화</button>
@@ -519,15 +508,13 @@ function makeTimeBtn(dk, r, di) {
 function refreshRemark(dk2, r2) {
   document.querySelectorAll('.remark-pen').forEach(function(pen) {
     if (pen.dataset.dk===dk2 && parseInt(pen.dataset.r)===r2) {
-      var imgVal=lsGet(skey(dk2,r2,'img'));
+      var txt=lsGet(skey(dk2,r2,'txt'));
       pen.innerHTML='';
-      if (imgVal) {
-        var img=document.createElement('img'); img.src=imgVal; pen.appendChild(img);
+      if (txt) {
+        var sp=document.createElement('span'); sp.className='remark-text'; sp.textContent=txt; pen.appendChild(sp);
       } else {
         var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='클릭'; pen.appendChild(ph);
       }
-      var td=pen.closest('td');
-      if (td) { var rst=td.querySelector('.cell-rst'); if(rst) imgVal?rst.classList.add('show'):rst.classList.remove('show'); }
     }
   });
 }
@@ -539,9 +526,9 @@ function makeRemarkCell(dk, r, di) {
 
   var pen=document.createElement('div'); pen.className='remark-pen';
   pen.dataset.dk=dk; pen.dataset.r=r; pen.dataset.di=di;
-  var imgVal=lsGet(skey(dk,r,'img'));
-  if (imgVal) {
-    var img=document.createElement('img'); img.src=imgVal; pen.appendChild(img);
+  var txtVal=lsGet(skey(dk,r,'txt'));
+  if (txtVal) {
+    var sp=document.createElement('span'); sp.className='remark-text'; sp.textContent=txtVal; pen.appendChild(sp);
   } else {
     var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='클릭'; pen.appendChild(ph);
   }
@@ -567,13 +554,9 @@ document.getElementById('btnNext').addEventListener('click', function(){ wOff++;
 document.getElementById('btnToday').addEventListener('click', function(){ wOff=0; buildTable(); });
 
 /* ══════════════════════════════════════════════════
-   ② 비고 펜 모달
+   ② 비고 텍스트 모달
    ══════════════════════════════════════════════════ */
 var penDk=null, penR=null, penDi=null;
-var isDrawing=false, lastX=0, lastY=0;
-var penSz=7, penCol='#111', eraserOn=false;
-var cvs=document.getElementById('cvs');
-var ctx=cvs.getContext('2d');
 
 function penOpen(dk, r, di) {
   penDk=dk; penR=r; penDi=di;
@@ -581,77 +564,25 @@ function penOpen(dk, r, di) {
   var dates=weekDates(wOff);
   document.getElementById('penInfo').textContent=
     fmt(dates[di])+' ('+DAYKO[di]+') — '+(r+1)+'번째 줄';
-  setTimeout(function(){
-    var rect=cvs.getBoundingClientRect();
-    cvs.width=Math.max(Math.round(rect.width),400); cvs.height=320;
-    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,cvs.width,cvs.height);
-    var saved=lsGet(skey(dk,r,'img'));
-    if (saved) { var i2=new Image(); i2.onload=function(){ ctx.drawImage(i2,0,0,cvs.width,cvs.height); }; i2.src=saved; }
-    applyPen();
-  }, 60);
+  var ta=document.getElementById('remarkText');
+  ta.value=lsGet(skey(dk,r,'txt'));
+  setTimeout(function(){ ta.focus(); }, 60);
 }
 
 function penClose() { document.getElementById('penModal').classList.remove('open'); }
 
-function applyPen() {
-  ctx.strokeStyle=eraserOn?'#ffffff':penCol;
-  ctx.lineWidth=eraserOn?28:penSz;
-  ctx.lineCap='round'; ctx.lineJoin='round';
-}
-
-function cvsClear() {
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,cvs.width,cvs.height);
-}
-
 function penSave() {
-  var url=cvs.toDataURL('image/png');
-  lsSet(skey(penDk,penR,'img'), url);
+  var txt=document.getElementById('remarkText').value.trim();
+  if (txt) lsSet(skey(penDk,penR,'txt'), txt);
+  else lsDel(skey(penDk,penR,'txt'));
   refreshRemark(penDk, penR);
   penClose();
 }
 function penReset() {
-  lsDel(skey(penDk,penR,'img'));
+  lsDel(skey(penDk,penR,'txt'));
   refreshRemark(penDk, penR);
   penClose();
 }
-
-function pSize(sz,id) {
-  penSz=sz; eraserOn=false;
-  ['ps1','ps2','ps3'].forEach(function(x){ document.getElementById(x).classList.remove('on'); });
-  document.getElementById(id).classList.add('on');
-  document.getElementById('eraser').classList.remove('on');
-  applyPen();
-}
-function pColor(col,id) {
-  penCol=col; eraserOn=false;
-  document.querySelectorAll('.cdot').forEach(function(d){ d.classList.remove('on'); });
-  document.getElementById(id).classList.add('on');
-  document.getElementById('eraser').classList.remove('on');
-  applyPen();
-}
-function pEraser() {
-  eraserOn=!eraserOn;
-  document.getElementById('eraser').classList.toggle('on',eraserOn);
-  applyPen();
-}
-
-function getPos(e) {
-  var rect=cvs.getBoundingClientRect();
-  var sx=cvs.width/rect.width, sy=cvs.height/rect.height;
-  var cx,cy;
-  if (e.touches&&e.touches.length){ cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
-  else if (e.changedTouches&&e.changedTouches.length){ cx=e.changedTouches[0].clientX; cy=e.changedTouches[0].clientY; }
-  else { cx=e.clientX; cy=e.clientY; }
-  return [(cx-rect.left)*sx,(cy-rect.top)*sy];
-}
-
-cvs.addEventListener('mousedown', function(e){ isDrawing=true; var p=getPos(e); lastX=p[0]; lastY=p[1]; ctx.beginPath(); ctx.moveTo(lastX,lastY); });
-cvs.addEventListener('mousemove', function(e){ if(!isDrawing) return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; });
-cvs.addEventListener('mouseup',    function(){ isDrawing=false; ctx.beginPath(); });
-cvs.addEventListener('mouseleave', function(){ isDrawing=false; ctx.beginPath(); });
-cvs.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=true; var p=getPos(e); lastX=p[0]; lastY=p[1]; ctx.beginPath(); ctx.moveTo(lastX,lastY); },{passive:false});
-cvs.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!isDrawing) return; var p=getPos(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); lastX=p[0]; lastY=p[1]; },{passive:false});
-cvs.addEventListener('touchend',   function(e){ e.preventDefault(); isDrawing=false; ctx.beginPath(); },{passive:false});
 
 /* ══════════════════════════════════════════════════
    ③ 시간 다이얼 모달
