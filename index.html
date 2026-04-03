@@ -480,7 +480,7 @@ function makeSelect(opts, cur, key) {
   var sel=document.createElement('select');
   for (var i=0; i<opts.length; i++) {
     var op=document.createElement('option');
-    op.value=opts[i]; op.textContent=opts[i];
+    op.value=opts[i]; op.textContent=opts[i]==='' ? '클릭' : opts[i];
     if (opts[i]===cur) op.selected=true;
     sel.appendChild(op);
   }
