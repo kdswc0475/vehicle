@@ -219,7 +219,14 @@
       display:flex; align-items:center; justify-content:center;
       font-size:30px; font-weight:bold; background:#fff;
       border-top:1px solid #ddd; border-bottom:1px solid #ddd;
+      /* input 스타일 */
+      border-left:none; border-right:none; border-radius:0;
+      text-align:center; outline:none; font-family:inherit;
+      -moz-appearance:textfield; padding:0;
     }
+    .dial-val::-webkit-inner-spin-button,
+    .dial-val::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+    .dial-val:focus { background:#fffde7; }
 
     .tp-preview {
       text-align:center; font-size:22px; font-weight:bold;
@@ -302,15 +309,15 @@
         <div class="tp-col-label">출 발</div>
         <div class="tp-dials">
           <div class="dial">
-            <button class="dial-up" ontouchstart="startRepeat('sh',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('sh',-1)" onmouseup="stopRepeat()">▲</button>
-            <div class="dial-val" id="dsh">09</div>
-            <button class="dial-dn" ontouchstart="startRepeat('sh',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('sh',1)"  onmouseup="stopRepeat()">▼</button>
+            <button class="dial-up" data-id="sh" data-dir="1">▲</button>
+            <input class="dial-val" id="dsh" type="number" inputmode="numeric" min="0" max="23">
+            <button class="dial-dn" data-id="sh" data-dir="-1">▼</button>
           </div>
           <div class="tp-sep">:</div>
           <div class="dial">
-            <button class="dial-up" ontouchstart="startRepeat('sm',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('sm',-1)" onmouseup="stopRepeat()">▲</button>
-            <div class="dial-val" id="dsm">00</div>
-            <button class="dial-dn" ontouchstart="startRepeat('sm',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('sm',1)"  onmouseup="stopRepeat()">▼</button>
+            <button class="dial-up" data-id="sm" data-dir="1">▲</button>
+            <input class="dial-val" id="dsm" type="number" inputmode="numeric" min="0" max="55">
+            <button class="dial-dn" data-id="sm" data-dir="-1">▼</button>
           </div>
         </div>
       </div>
@@ -322,15 +329,15 @@
         <div class="tp-col-label">도 착</div>
         <div class="tp-dials">
           <div class="dial">
-            <button class="dial-up" ontouchstart="startRepeat('eh',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('eh',-1)" onmouseup="stopRepeat()">▲</button>
-            <div class="dial-val" id="deh">17</div>
-            <button class="dial-dn" ontouchstart="startRepeat('eh',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('eh',1)"  onmouseup="stopRepeat()">▼</button>
+            <button class="dial-up" data-id="eh" data-dir="1">▲</button>
+            <input class="dial-val" id="deh" type="number" inputmode="numeric" min="0" max="23">
+            <button class="dial-dn" data-id="eh" data-dir="-1">▼</button>
           </div>
           <div class="tp-sep">:</div>
           <div class="dial">
-            <button class="dial-up" ontouchstart="startRepeat('em',-1)" ontouchend="stopRepeat()" onmousedown="startRepeat('em',-1)" onmouseup="stopRepeat()">▲</button>
-            <div class="dial-val" id="dem">00</div>
-            <button class="dial-dn" ontouchstart="startRepeat('em',1)"  ontouchend="stopRepeat()" onmousedown="startRepeat('em',1)"  onmouseup="stopRepeat()">▼</button>
+            <button class="dial-up" data-id="em" data-dir="1">▲</button>
+            <input class="dial-val" id="dem" type="number" inputmode="numeric" min="0" max="55">
+            <button class="dial-dn" data-id="em" data-dir="-1">▼</button>
           </div>
         </div>
       </div>
@@ -617,33 +624,89 @@ function tpOpen(dk, r, di) {
 function tpClose() { document.getElementById('tpModal').classList.remove('open'); }
 
 function tpRefresh() {
-  document.getElementById('dsh').textContent=pad(tpVals.sh);
-  document.getElementById('dsm').textContent=pad(tpVals.sm);
-  document.getElementById('deh').textContent=pad(tpVals.eh);
-  document.getElementById('dem').textContent=pad(tpVals.em);
+  /* div → input 으로 변경됐으므로 .value 사용 */
+  document.getElementById('dsh').value=pad(tpVals.sh);
+  document.getElementById('dsm').value=pad(tpVals.sm);
+  document.getElementById('deh').value=pad(tpVals.eh);
+  document.getElementById('dem').value=pad(tpVals.em);
   document.getElementById('tpPreview').textContent=
     pad(tpVals.sh)+':'+pad(tpVals.sm)+' ~ '+pad(tpVals.eh)+':'+pad(tpVals.em);
 }
 function pad(n){ return String(n).padStart(2,'0'); }
 
 function adjDial(id, dir) {
+  /* dir: +1=증가(▲), -1=감소(▼) */
   if (id==='sh'||id==='eh') {
     tpVals[id]=(tpVals[id]+dir+24)%24;
   } else {
+    /* 분: 5분 단위, +60으로 음수 wrap 방지 */
     tpVals[id]=(tpVals[id]+dir*5+60)%60;
   }
   tpRefresh();
 }
 
+/* ── 터치/마우스 이중 발화 방지 ─────────────────
+   touchstart 에서 preventDefault() → 후속 mousedown 차단
+   버튼은 data-id / data-dir 속성으로 제어              */
+var repeatTimer=null, repeatInterval=null;
+
 function startRepeat(id, dir) {
+  stopRepeat();
   adjDial(id, dir);
   repeatTimer=setTimeout(function(){
-    repeatInterval=setInterval(function(){ adjDial(id,dir); }, 120);
-  }, 400);
+    repeatInterval=setInterval(function(){ adjDial(id,dir); }, 130);
+  }, 450);
 }
 function stopRepeat() {
   clearTimeout(repeatTimer); clearInterval(repeatInterval);
   repeatTimer=null; repeatInterval=null;
+}
+
+/* ── 다이얼 버튼 이벤트 바인딩 (페이지 로드 후 한 번) ── */
+function setupDialBtns() {
+  document.querySelectorAll('.dial-up, .dial-dn').forEach(function(btn) {
+    var id  = btn.dataset.id;
+    var dir = parseInt(btn.dataset.dir);
+
+    /* 터치: preventDefault로 mousedown 차단 */
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      startRepeat(id, dir);
+    }, {passive: false});
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      stopRepeat();
+    }, {passive: false});
+
+    /* 마우스 (비터치 환경) */
+    btn.addEventListener('mousedown', function(e) { startRepeat(id, dir); });
+    btn.addEventListener('mouseup',   stopRepeat);
+    btn.addEventListener('mouseleave',stopRepeat);
+  });
+
+  /* ── 숫자 직접 입력 ── */
+  var dialCfg = [
+    {id:'sh', elId:'dsh', isMin:false},
+    {id:'sm', elId:'dsm', isMin:true },
+    {id:'eh', elId:'deh', isMin:false},
+    {id:'em', elId:'dem', isMin:true }
+  ];
+  dialCfg.forEach(function(cfg) {
+    var el = document.getElementById(cfg.elId);
+    el.addEventListener('change', function() {
+      var v = parseInt(this.value);
+      if (isNaN(v)) { v = 0; }
+      if (cfg.isMin) {
+        v = Math.max(0, Math.min(59, v));
+        v = Math.round(v / 5) * 5;   /* 5분 단위로 스냅 */
+        if (v >= 60) v = 55;
+      } else {
+        v = Math.max(0, Math.min(23, v));
+      }
+      tpVals[cfg.id] = v;
+      tpRefresh();
+    });
+  });
 }
 
 function tpDone() {
@@ -691,6 +754,7 @@ function highlightActive() {
 /* ─────────────────────── 초기 실행 ─────────────────── */
 buildTable();
 highlightActive();
+setupDialBtns(); /* 다이얼 버튼 이벤트 등록 */
 
 if (screen.orientation&&screen.orientation.lock) {
   screen.orientation.lock('landscape').catch(function(){});
