@@ -127,19 +127,8 @@
     .time-btn.has-val { color:#000; font-weight:bold; }
     .time-btn.empty   { color:#ccc; }
 
-    /* ─ 셀 리셋 버튼 ─ */
-    .cell-wrap { position:relative; width:100%; height:100%; }
-    .cell-rst {
-      position:absolute; top:1px; right:1px;
-      width:16px; height:16px; font-size:12px; line-height:1;
-      background:#e53935; color:#fff; border:none; border-radius:50%;
-      cursor:pointer; display:none; align-items:center; justify-content:center;
-      padding:0; z-index:5; font-weight:bold;
-    }
-    .cell-rst.show { display:flex; }
-
     /* ─ 비고 셀 ─ */
-    .remark-td { padding:0; vertical-align:top; position:relative; }
+    .remark-td { padding:0; vertical-align:top; }
     .remark-wrap { display:flex; flex-direction:column; height: calc((100vh - 146px) / 8); }
     .remark-pen {
       flex:1; display:flex; align-items:center; justify-content:center;
@@ -211,6 +200,7 @@
     }
     .pbtn-clear  { background:#e0e0e0; border:1px solid #aaa; font-weight:normal; }
     .pbtn-cancel { background:#c62828; color:#fff; }
+    .pbtn-reset  { background:#f57c00; color:#fff; }
     .pbtn-done   { background:#1565c0; color:#fff; font-size:16px; padding:12px 40px; }
 
     /* ══════════════════════════════════════
@@ -272,6 +262,7 @@
       font-family:inherit; cursor:pointer; border:none; font-weight:bold;
     }
     .tpbtn-cancel { background:#e0e0e0; border:1px solid #aaa; font-weight:normal; }
+    .tpbtn-reset  { background:#f57c00; color:#fff; }
     .tpbtn-done   { background:#2e7d32; color:#fff; font-size:16px; padding:12px 40px; }
   </style>
 </head>
@@ -318,6 +309,7 @@
     <canvas id="cvs"></canvas>
     <div class="pen-btns">
       <button class="pbtn pbtn-cancel" onclick="penClose()">취소</button>
+      <button class="pbtn pbtn-reset"  onclick="penReset()">초기화</button>
       <button class="pbtn pbtn-done"   onclick="penSave()">완료</button>
     </div>
   </div>
@@ -375,6 +367,7 @@
 
     <div class="tp-btns">
       <button class="tpbtn tpbtn-cancel" onclick="tpClose()">취소</button>
+      <button class="tpbtn tpbtn-reset"  onclick="tpReset()">초기화</button>
       <button class="tpbtn tpbtn-done"   onclick="tpDone()">완료</button>
     </div>
   </div>
@@ -483,7 +476,6 @@ function buildTable() {
 }
 
 function makeSelect(opts, cur, key) {
-  var wrap=document.createElement('div'); wrap.className='cell-wrap';
   var sel=document.createElement('select');
   for (var i=0; i<opts.length; i++) {
     var op=document.createElement('option');
@@ -491,19 +483,17 @@ function makeSelect(opts, cur, key) {
     if (opts[i]===cur) op.selected=true;
     sel.appendChild(op);
   }
-  var rst=document.createElement('button');
-  rst.className='cell-rst'+(cur?' show':''); rst.textContent='×'; rst.title='초기화';
-  (function(k,s,r){
-    s.addEventListener('change', function(){ lsSet(k,this.value); this.value?r.classList.add('show'):r.classList.remove('show'); });
-    r.addEventListener('click', function(e){ e.stopPropagation(); s.value=''; lsDel(k); r.classList.remove('show'); });
-  })(key,sel,rst);
-  wrap.appendChild(sel); wrap.appendChild(rst);
-  return wrap;
+  var sep=document.createElement('option'); sep.disabled=true; sep.textContent='─────────'; sel.appendChild(sep);
+  var rst=document.createElement('option'); rst.value='__rst__'; rst.textContent='초기화'; sel.appendChild(rst);
+  (function(k){ sel.addEventListener('change', function(){
+    if (this.value==='__rst__') { this.value=''; lsDel(k); }
+    else lsSet(k, this.value);
+  }); })(key);
+  return sel;
 }
 
 /* ③ 시간 버튼 */
 function makeTimeBtn(dk, r, di) {
-  var wrap=document.createElement('div'); wrap.className='cell-wrap';
   var btn=document.createElement('button');
   btn.className='time-btn';
   var val=lsGet(skey(dk,r,'t'));
@@ -513,17 +503,7 @@ function makeTimeBtn(dk, r, di) {
   btn.addEventListener('click', (function(pdk,pr,pdi){
     return function(){ tpOpen(pdk,pr,pdi); };
   })(dk,r,di));
-  var rst=document.createElement('button');
-  rst.className='cell-rst'+(val?' show':''); rst.textContent='×'; rst.title='초기화';
-  (function(k,b,rs){
-    rs.addEventListener('click', function(e){
-      e.stopPropagation(); lsDel(k);
-      b.textContent='시간'; b.classList.remove('has-val'); b.classList.add('empty');
-      rs.classList.remove('show'); highlightActive();
-    });
-  })(skey(dk,r,'t'),btn,rst);
-  wrap.appendChild(btn); wrap.appendChild(rst);
-  return wrap;
+  return btn;
 }
 
 function refreshRemark(dk2, r2) {
@@ -556,11 +536,6 @@ function makeRemarkCell(dk, r, di) {
     var ph=document.createElement('span'); ph.className='remark-ph'; ph.textContent='터치'; pen.appendChild(ph);
   }
   pen.addEventListener('click', (function(pdk,pr,pdi){ return function(){ penOpen(pdk,pr,pdi); }; })(dk,r,di));
-
-  var rst=document.createElement('button');
-  rst.className='cell-rst'+(imgVal?' show':''); rst.textContent='×'; rst.title='비고 초기화';
-  (function(dk3,r3,rs){ rs.addEventListener('click', function(e){ e.stopPropagation(); lsDel(skey(dk3,r3,'img')); refreshRemark(dk3,r3); }); })(dk,r,rst);
-  td.appendChild(rst);
 
   wrap.appendChild(pen);
 
@@ -621,6 +596,11 @@ function cvsClear() {
 function penSave() {
   var url=cvs.toDataURL('image/png');
   lsSet(skey(penDk,penR,'img'), url);
+  refreshRemark(penDk, penR);
+  penClose();
+}
+function penReset() {
+  lsDel(skey(penDk,penR,'img'));
   refreshRemark(penDk, penR);
   penClose();
 }
@@ -776,16 +756,24 @@ function setupDialBtns() {
 function tpDone() {
   var val=pad(tpVals.sh)+':'+pad(tpVals.sm)+'~'+pad(tpVals.eh)+':'+pad(tpVals.em);
   lsSet(skey(tpDk,tpR,'t'), val);
-  /* 해당 시간 버튼 즉시 갱신 */
   document.querySelectorAll('.time-btn').forEach(function(btn){
     if (btn.dataset.dk===tpDk && parseInt(btn.dataset.r)===tpR) {
       btn.textContent=val;
       btn.classList.remove('empty'); btn.classList.add('has-val');
-      var rst=btn.parentNode.querySelector('.cell-rst');
-      if (rst) rst.classList.add('show');
     }
   });
-  highlightActive(); /* 시간 저장 즉시 하이라이트 갱신 */
+  highlightActive();
+  tpClose();
+}
+function tpReset() {
+  lsDel(skey(tpDk,tpR,'t'));
+  document.querySelectorAll('.time-btn').forEach(function(btn){
+    if (btn.dataset.dk===tpDk && parseInt(btn.dataset.r)===tpR) {
+      btn.textContent='시간';
+      btn.classList.remove('has-val'); btn.classList.add('empty');
+    }
+  });
+  highlightActive();
   tpClose();
 }
 
