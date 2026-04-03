@@ -109,6 +109,7 @@
     }
 
     /* ─ 차량/사용자 가운데 정렬 ─ */
+    select.sel-empty { color:#ccc; }
     select {
       width:100%; border:none; background:transparent;
       font-family:inherit; font-size:10px;
@@ -486,9 +487,11 @@ function makeSelect(opts, cur, key) {
   }
   var sep=document.createElement('option'); sep.disabled=true; sep.textContent='─────────'; sel.appendChild(sep);
   var rst=document.createElement('option'); rst.value='__rst__'; rst.textContent='초기화'; sel.appendChild(rst);
+  if (!cur) sel.classList.add('sel-empty');
   (function(k){ sel.addEventListener('change', function(){
     if (this.value==='__rst__') { this.value=''; lsDel(k); }
     else lsSet(k, this.value);
+    this.value==='' ? this.classList.add('sel-empty') : this.classList.remove('sel-empty');
   }); })(key);
   return sel;
 }
