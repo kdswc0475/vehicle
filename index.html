@@ -276,15 +276,7 @@
       <span class="pen-info" id="penInfo"></span>
     </div>
     <div class="pen-toolbar">
-      <span>굵기:</span>
-      <button class="tbtn on" id="ps1" onclick="pSize(2,'ps1')">얇게</button>
-      <button class="tbtn"    id="ps2" onclick="pSize(4,'ps2')">보통</button>
-      <button class="tbtn"    id="ps3" onclick="pSize(7,'ps3')">굵게</button>
-      <span style="margin-left:14px">색상:</span>
-      <div class="cdot on" id="pc1" style="background:#111"    onclick="pColor('#111','pc1')"    title="검정"></div>
-      <div class="cdot"    id="pc2" style="background:#1565c0" onclick="pColor('#1565c0','pc2')" title="파랑"></div>
-      <div class="cdot"    id="pc3" style="background:#b71c1c" onclick="pColor('#b71c1c','pc3')" title="빨강"></div>
-      <button class="tbtn" id="eraser" onclick="pEraser()" style="margin-left:14px">지우개</button>
+      <button class="tbtn" id="eraser" onclick="pEraser()">지우개</button>
       <button class="tbtn pbtn-clear" onclick="cvsClear()" style="margin-left:auto">전체 지우기</button>
     </div>
     <canvas id="cvs"></canvas>
@@ -517,7 +509,7 @@ document.getElementById('btnToday').addEventListener('click', function(){ wOff=0
    ══════════════════════════════════════════════════ */
 var penDk=null, penR=null, penDi=null;
 var isDrawing=false, lastX=0, lastY=0;
-var penSz=2, penCol='#111', eraserOn=false;
+var penSz=7, penCol='#111', eraserOn=false;
 var cvs=document.getElementById('cvs');
 var ctx=cvs.getContext('2d');
 
